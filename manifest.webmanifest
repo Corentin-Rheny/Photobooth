@@ -1,0 +1,12 @@
+{
+  "name": "PhotoBooth iPad",
+  "short_name": "PhotoBooth",
+  "description": "Photobooth PWA pour iPad, caméra externe USB/HDMI, collage 10x15 et AirPrint SELPHY CP1500.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#111111",
+  "theme_color": "#111111",
+  "icons": [{"src":"./icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}
