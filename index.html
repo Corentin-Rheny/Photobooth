@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="PhotoBooth">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#111111">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon.svg">
+  <link rel="stylesheet" href="./styles.css">
+  <title>PhotoBooth iPad</title>
+</head>
+<body>
+  <div id="app" class="app">
+    <main class="stage">
+      <video id="video" autoplay muted playsinline></video>
+      <div id="safeFrame" class="safe-frame" aria-hidden="true"></div>
+
+      <header class="topbar">
+        <div class="status-pill">
+          <span class="dot" id="statusDot"></span>
+          <span id="statusText">Prêt à démarrer</span>
+        </div>
+        <div class="top-actions">
+          <button class="btn small secondary" id="switchCameraBtn" type="button">Caméra</button>
+          <button class="btn small secondary" id="settingsBtn" type="button">Réglages</button>
+        </div>
+      </header>
+
+      <aside id="thumbs" class="thumbs" aria-label="Photos prises"></aside>
+
+      <div id="countdownOverlay" class="countdown-overlay" aria-hidden="true">
+        <div id="countdownNumber" class="countdown-number">3</div>
+      </div>
+
+      <div id="flashOverlay" class="flash-overlay"></div>
+
+      <section id="welcomePanel" class="modal visible">
+        <div class="card welcome">
+          <div class="app-logo">PB</div>
+          <h1>PhotoBooth iPad</h1>
+          <p>
+            Web app gratuite pour iPadOS 18 : caméra externe USB/HDMI si disponible,
+            compte à rebours, montage 10×15 cm et impression AirPrint vers Canon SELPHY CP1500.
+          </p>
+          <div class="actions">
+            <button class="btn primary" id="startBtn" type="button">Démarrer la caméra</button>
+            <button class="btn secondary" id="openHelpBtn" type="button">Installation / aide</button>
+          </div>
+          <p class="note">
+            À utiliser depuis une adresse HTTPS. Une page ouverte directement depuis Fichiers peut bloquer la caméra.
+          </p>
+        </div>
+      </section>
+
+      <section id="settingsPanel" class="modal">
+        <div class="card">
+          <div class="card-head">
+            <h2>Réglages</h2>
+            <button class="btn icon secondary" id="closeSettingsBtn" type="button">×</button>
+          </div>
+
+          <div class="settings-grid">
+            <label>
+              Caméra
+              <select id="cameraSelect"></select>
+            </label>
+
+            <label>
+              Résolution demandée
+              <select id="resolutionSelect">
+                <option value="1280x720">HD 720p — plus stable</option>
+                <option value="1920x1080" selected>Full HD 1080p — recommandé</option>
+                <option value="3840x2160">4K — à éviter en événement</option>
+              </select>
+            </label>
+
+            <label>
+              Nombre de photos
+              <select id="photoCountSelect">
+                <option value="1">1 photo</option>
+                <option value="2">2 photos</option>
+                <option value="3" selected>3 photos</option>
+                <option value="4">4 photos</option>
+              </select>
+            </label>
+
+            <label>
+              Compte à rebours
+              <select id="delaySelect">
+                <option value="3">3 secondes</option>
+                <option value="4">4 secondes</option>
+                <option value="5" selected>5 secondes</option>
+                <option value="7">7 secondes</option>
+              </select>
+            </label>
+
+            <label>
+              Format du tirage
+              <select id="layoutSelect">
+                <option value="landscape" selected>10×15 paysage</option>
+                <option value="portrait">10×15 portrait</option>
+                <option value="strip2">2 bandes photobooth sur 10×15</option>
+              </select>
+            </label>
+
+            <label>
+              Miroir
+              <select id="mirrorSelect">
+                <option value="preview" selected>Miroir seulement à l’écran</option>
+                <option value="none">Aucun miroir</option>
+                <option value="output">Miroir sur l’écran et les photos</option>
+              </select>
+            </label>
+
+            <label>
+              Titre imprimé
+              <input id="titleInput" type="text" value="Merci pour votre visite">
+            </label>
+
+            <label>
+              Bas de page
+              <input id="footerInput" type="text" value="">
+            </label>
+
+            <label>
+              Mode couleurs
+              <select id="filterSelect">
+                <option value="none" selected>Couleur normale</option>
+                <option value="bw">Noir et blanc</option>
+                <option value="warm">Chaud</option>
+                <option value="cool">Froid</option>
+            </select>
+            </label>
+
+            <label>
+              Sécurité impression
+              <select id="printGuardSelect">
+                <option value="manual" selected>Bouton imprimer après chaque tirage</option>
+                <option value="autoPrompt">Ouvrir AirPrint automatiquement après le tirage</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="actions end">
+            <button class="btn secondary" id="refreshCamerasBtn" type="button">Rechercher les caméras</button>
+            <button class="btn primary" id="saveSettingsBtn" type="button">Appliquer</button>
+          </div>
+          <p class="note">
+            Si la carte capture HDMI est branchée, elle doit apparaître comme « USB Camera », « Capture » ou nom similaire.
+          </p>
+        </div>
+      </section>
+
+      <section id="resultPanel" class="modal">
+        <div class="card result-card">
+          <div class="card-head">
+            <h2>Tirage prêt</h2>
+            <button class="btn icon secondary" id="closeResultBtn" type="button">×</button>
+          </div>
+          <img id="resultImage" class="result-image" alt="Montage prêt à imprimer">
+          <div class="actions">
+            <button class="btn primary" id="printBtn" type="button">Imprimer AirPrint</button>
+            <button class="btn secondary" id="shareBtn" type="button">Partager / enregistrer</button>
+            <button class="btn secondary" id="downloadBtn" type="button">Télécharger</button>
+            <button class="btn danger" id="restartBtn" type="button">Recommencer</button>
+          </div>
+          <p class="note">
+            Dans AirPrint : choisir « Canon SELPHY CP1500 », 1 copie, papier 10×15 / 4×6 si proposé.
+          </p>
+        </div>
+      </section>
+
+      <section id="helpPanel" class="modal">
+        <div class="card help-card">
+          <div class="card-head">
+            <h2>Installation rapide sur iPad</h2>
+            <button class="btn icon secondary" id="closeHelpBtn" type="button">×</button>
+          </div>
+          <ol>
+            <li>Héberge ce dossier sur une adresse HTTPS gratuite, par exemple GitHub Pages, Netlify Drop, Cloudflare Pages ou ton NAS en HTTPS.</li>
+            <li>Sur l’iPad : ouvre l’adresse dans Safari.</li>
+            <li>Touche Partager → Ajouter à l’écran d’accueil.</li>
+            <li>Active « Ouvrir comme app web » si l’option apparaît, puis touche Ajouter.</li>
+            <li>Branche la carte capture HDMI USB-C, puis appuie sur « Démarrer la caméra ».</li>
+            <li>Va dans Réglages → Caméra → choisis la caméra USB/capture.</li>
+            <li>Connecte l’iPad et la SELPHY CP1500 au même Wi‑Fi, puis teste l’impression.</li>
+          </ol>
+          <h3>Câblage option B</h3>
+          <pre>Lumix S1 → HDMI → carte capture HDMI USB-C → hub USB-C PD → iPad
+iPad → Wi‑Fi → Canon SELPHY CP1500</pre>
+          <p class="note">
+            L’impression silencieuse complète n’est pas possible dans une web app iPad : AirPrint demande une validation.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="controlbar">
+      <button class="btn primary big" id="captureBtn" type="button" disabled>Commencer</button>
+      <button class="btn secondary" id="clearBtn" type="button" disabled>Effacer</button>
+      <button class="btn secondary" id="fullscreenBtn" type="button">Plein écran</button>
+    </footer>
+  </div>
+
+  <div id="printArea" aria-hidden="true">
+    <img id="printImage" alt="">
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
