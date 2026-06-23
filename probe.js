@@ -1,1 +1,1 @@
-navigator.mediaDevices.getUserMedia({video:true}).then(s=>console.log(s));
+// Temporary test file intentionally left blank.
