@@ -1,2 +1,1 @@
-const video = document.getElementById('video');
-console.log(video);
+// Temporary test file intentionally left blank.
