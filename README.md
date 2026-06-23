@@ -1,8 +1,8 @@
-# PhotoBooth iPad
+# Photobooth Gabrielle & Corentin
 
-Web app gratuite pour photobooth sur iPadOS 18, avec caméra externe via carte capture HDMI USB-C, montage 10x15 et impression AirPrint vers Canon SELPHY CP1500.
+Web app gratuite pour iPadOS 18, pensée pour le mariage Gabrielle & Corentin.
 
-## Acces application
+## Accès application
 
 GitHub Pages :
 
@@ -12,19 +12,24 @@ Repository :
 
 https://github.com/Corentin-Rheny/Photobooth
 
-## Fonctionnalites
+## Fonctionnalités
 
-- Camera iPad ou camera externe USB / HDMI capture UVC.
-- Compte a rebours.
-- Capture de 1 a 4 photos.
-- Montage automatique 10x15 cm.
-- Mode 2 bandes photobooth sur une feuille 10x15.
-- Titre et bas de page personnalisables.
-- Impression AirPrint vers Canon SELPHY CP1500.
-- Partage et enregistrement du tirage.
-- Sans abonnement et sans watermark.
+- Interface graphique aux couleurs du document de présentation : fond crème `#FEF2EB` et rouge principal `#E04043`.
+- Logo CG utilisé comme favicon et icône d'application.
+- Accueil avec vue caméra en direct, recadrée en `object-fit: cover` et non étirée.
+- Un seul bouton utilisateur : `Prendre une photo`.
+- Compte à rebours fixe de 5 secondes.
+- Une seule photo finale, sans mode bandes ni multi-photo.
+- Mise en forme finale 10x15 cm / 4x6 pouces.
+- AirPrint ouvre directement la fenêtre d'impression.
+- Partage via l'API de partage iPadOS, avec AirDrop proposé par iPadOS lorsque disponible.
+- Après impression ou partage, l'interface reste sur l'écran de résultat.
+- Retour à l'accueil par le bouton `Continuer` ou après 30 secondes d'inactivité.
+- Panneau réglages protégé par le code `22082026`.
+- Stockage local automatique de chaque capture dans IndexedDB sur l'iPad.
+- Zoom et dézoom désactivés au maximum possible côté web app.
 
-## Cablage recommande
+## Câblage recommandé
 
 ```text
 Lumix S1
@@ -34,7 +39,7 @@ Lumix S1
   -> iPad Air 2020
 
 Canon SELPHY CP1500
-  -> meme Wi-Fi que l'iPad
+  -> même Wi-Fi que l'iPad
   -> AirPrint
 ```
 
@@ -42,12 +47,16 @@ Canon SELPHY CP1500
 
 1. Ouvrir https://corentin-rheny.github.io/Photobooth/ dans Safari.
 2. Appuyer sur Partager.
-3. Choisir Ajouter a l'ecran d'accueil.
-4. Activer Ouvrir comme app web si propose.
-5. Lancer PhotoBooth depuis l'ecran d'accueil.
-6. Autoriser la camera.
-7. Dans Reglages, choisir la camera USB/capture.
+3. Choisir Ajouter à l'écran d'accueil.
+4. Activer Ouvrir comme app web si proposé.
+5. Lancer PhotoBooth depuis l'écran d'accueil.
+6. Autoriser la caméra au premier lancement.
+7. Réglages -> code `22082026` -> choisir la caméra USB/capture si nécessaire.
 
-## Hebergement NAS
+## À propos des polices
 
-Les memes fichiers peuvent etre copies sur ton NAS dans le dossier partage `Webapp photobooth`. Le NAS doit servir le dossier comme un site web HTTP/HTTPS. Pour utiliser la camera sur iPad, HTTPS est fortement conseille.
+Les CSS appellent les familles locales `Braven` et `Against` lorsqu'elles sont disponibles sur l'appareil. Les fichiers de police fournis ne sont pas publiés dans le repository public.
+
+## Hébergement NAS
+
+Les mêmes fichiers peuvent être copiés sur ton NAS dans le dossier partagé `Webapp photobooth`. Le NAS doit servir le dossier comme un site web HTTP/HTTPS. Pour utiliser la caméra sur iPad, HTTPS est fortement conseillé.
