@@ -4,8 +4,8 @@
   const CONFIG_CODE = '22082026';
   const COUNTDOWN_SECONDS = 5;
   const RESULT_IDLE_MS = 30000;
-  const DB_NAME = 'gc-photobooth';
-  const STORE_NAME = 'captures';
+  const THEME_RED = '#E04043';
+  const THEME_CREAM = '#FEF2EB';
   const $ = (id) => document.getElementById(id);
 
   const els = {
@@ -22,7 +22,7 @@
     resultPreview: $('resultPreview'),
     printImage: $('printImage'),
     printButton: $('printButton'),
-    shareButton: $('shareButton'),
+    recoverButton: $('recoverButton'),
     continueButton: $('continueButton'),
     resultStatus: $('resultStatus'),
     pinPanel: $('pinPanel'),
@@ -46,9 +46,9 @@
 
   let stream = null;
   let selectedDeviceId = '';
-  let rawPhotoCanvas = null;
   let finalBlob = null;
   let finalUrl = '';
+  let previewUrl = '';
   let idleTimer = null;
   let busy = false;
 
@@ -56,17 +56,15 @@
     resolution: '1920x1080',
     mirror: 'preview',
     title: 'Gabrielle & Corentin',
-    date: '22 août 2026'
+    date: '22.08.2026'
   };
 
   function setStatus(message) {
-    els.statusText.textContent = message;
+    if (els.statusText) els.statusText.textContent = message;
   }
 
   function setScreen(name) {
-    [els.homeScreen, els.countdownScreen, els.resultScreen].forEach((screen) => {
-      screen.classList.remove('is-active');
-    });
+    [els.homeScreen, els.countdownScreen, els.resultScreen].forEach((screen) => screen.classList.remove('is-active'));
     if (name === 'countdown') els.countdownScreen.classList.add('is-active');
     else if (name === 'result') els.resultScreen.classList.add('is-active');
     else els.homeScreen.classList.add('is-active');
@@ -87,7 +85,6 @@
     try {
       settings = { ...settings, ...JSON.parse(localStorage.getItem('gc-photobooth-settings') || '{}') };
     } catch (_) {}
-
     els.resolutionSelect.value = settings.resolution;
     els.mirrorSelect.value = settings.mirror;
     els.eventTitleInput.value = settings.title;
@@ -118,7 +115,6 @@
 
   async function listCameras() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return [];
-
     const devices = await navigator.mediaDevices.enumerateDevices();
     const cameras = devices.filter((device) => device.kind === 'videoinput');
     els.cameraSelect.innerHTML = '';
@@ -127,7 +123,7 @@
       const option = document.createElement('option');
       option.value = camera.deviceId;
       const label = camera.label || `Caméra ${index + 1}`;
-      option.textContent = /usb|capture|hdmi|uvc|elgato|cam link/i.test(label)
+      option.textContent = /usb|capture|hdmi|uvc|elgato|cam link|ugreen/i.test(label)
         ? `⭐ ${label} - caméra externe`
         : label;
       els.cameraSelect.appendChild(option);
@@ -136,14 +132,13 @@
     if (selectedDeviceId && cameras.some((camera) => camera.deviceId === selectedDeviceId)) {
       els.cameraSelect.value = selectedDeviceId;
     } else {
-      const external = cameras.find((camera) => /usb|capture|hdmi|uvc|elgato|cam link/i.test(camera.label || ''));
+      const external = cameras.find((camera) => /usb|capture|hdmi|uvc|elgato|cam link|ugreen/i.test(camera.label || ''));
       if (external) els.cameraSelect.value = external.deviceId;
     }
-
     return cameras;
   }
 
-  function attachStreamToVideos() {
+  function attachStream() {
     els.liveVideo.srcObject = stream;
     els.countVideo.srcObject = stream;
   }
@@ -152,7 +147,7 @@
     if (!stream) return;
     stream.getTracks().forEach((track) => track.stop());
     stream = null;
-    attachStreamToVideos();
+    attachStream();
   }
 
   async function startCamera(deviceId = '') {
@@ -161,13 +156,13 @@
     }
 
     stopCamera();
-    setStatus('Ouverture de la caméra...');
+    setStatus('Ouverture caméra...');
 
     const { width, height } = parseResolution();
     const videoConstraints = {
       width: { ideal: width },
       height: { ideal: height },
-      frameRate: { ideal: 30, max: 30 }
+      frameRate: { ideal: 30, max: 60 }
     };
 
     if (deviceId) videoConstraints.deviceId = { exact: deviceId };
@@ -175,11 +170,11 @@
 
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: videoConstraints });
-    } catch (error) {
+    } catch (_) {
       stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: deviceId ? { deviceId: { exact: deviceId } } : true });
     }
 
-    attachStreamToVideos();
+    attachStream();
     await els.liveVideo.play();
     await els.countVideo.play();
 
@@ -188,7 +183,7 @@
     localStorage.setItem('gc-camera-was-accepted', '1');
     els.cameraPlaceholder.classList.add('is-hidden');
     await listCameras();
-    setStatus('Caméra prête');
+    setStatus('Prêt');
   }
 
   async function ensureCamera() {
@@ -227,16 +222,6 @@
     return canvas;
   }
 
-  function roundedRect(context, x, y, width, height, radius) {
-    context.beginPath();
-    context.moveTo(x + radius, y);
-    context.arcTo(x + width, y, x + width, y + height, radius);
-    context.arcTo(x + width, y + height, x, y + height, radius);
-    context.arcTo(x, y + height, x, y, radius);
-    context.arcTo(x, y, x + width, y, radius);
-    context.closePath();
-  }
-
   function drawImageCover(context, source, target) {
     const scale = Math.max(target.width / source.width, target.height / source.height);
     const cropWidth = target.width / scale;
@@ -246,89 +231,72 @@
     context.drawImage(source, cropX, cropY, cropWidth, cropHeight, target.x, target.y, target.width, target.height);
   }
 
-  async function createFinalPrint(canvas) {
-    const output = document.createElement('canvas');
-    output.width = 1800;
-    output.height = 1200;
-    const context = output.getContext('2d', { alpha: false });
-
-    context.fillStyle = '#FEF2EB';
-    context.fillRect(0, 0, output.width, output.height);
-
-    context.fillStyle = '#E04043';
-    context.font = '400 78px Braven, Didot, Georgia, serif';
-    context.textAlign = 'center';
-    context.textBaseline = 'top';
-    context.fillText(els.eventTitleInput.value.trim() || 'Gabrielle & Corentin', output.width / 2, 72);
-
-    const photoRect = { x: 150, y: 190, width: 1500, height: 825 };
-    context.fillStyle = '#050505';
-    context.fillRect(photoRect.x - 18, photoRect.y - 18, photoRect.width + 36, photoRect.height + 36);
-    drawImageCover(context, canvas, photoRect);
-
-    context.fillStyle = '#E04043';
-    context.font = '400 42px Against, Helvetica, Arial, sans-serif';
-    context.fillText(els.eventDateInput.value.trim() || '22 août 2026', output.width / 2, 1048);
-
-    context.font = '400 34px Braven, Didot, Georgia, serif';
-    context.fillText('CG', 92, 1090);
-    context.fillText('Gabrielle et Corentin', output.width / 2, 1120);
-
-    return new Promise((resolve) => output.toBlob(resolve, 'image/png', 1));
-  }
-
-  function canvasToBlob(canvas, type = 'image/jpeg', quality = 0.94) {
+  function canvasToBlob(canvas, type = 'image/png', quality = 1) {
     return new Promise((resolve) => canvas.toBlob(resolve, type, quality));
   }
 
-  function openDatabase() {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(DB_NAME, 1);
-      request.onupgradeneeded = () => {
-        const db = request.result;
-        if (!db.objectStoreNames.contains(STORE_NAME)) {
-          db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
-        }
-      };
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
+  async function createFinalPrint(rawCanvas) {
+    const output = document.createElement('canvas');
+    output.width = 1748;
+    output.height = 1181;
+    const context = output.getContext('2d', { alpha: false });
+    const footerHeight = Math.round(output.height * 0.102);
+    const photoHeight = output.height - footerHeight;
+
+    context.fillStyle = '#000000';
+    context.fillRect(0, 0, output.width, photoHeight);
+    drawImageCover(context, rawCanvas, { x: 0, y: 0, width: output.width, height: photoHeight });
+
+    context.fillStyle = THEME_CREAM;
+    context.fillRect(0, photoHeight, output.width, footerHeight);
+
+    context.fillStyle = THEME_RED;
+    context.textBaseline = 'middle';
+    context.font = '400 56px BravenGC, Didot, Georgia, serif';
+    context.textAlign = 'left';
+    context.fillText(els.eventTitleInput.value.trim() || 'Gabrielle & Corentin', 96, photoHeight + footerHeight / 2 + 4);
+    context.textAlign = 'right';
+    context.fillText(els.eventDateInput.value.trim() || '22.08.2026', output.width - 96, photoHeight + footerHeight / 2 + 4);
+
+    return canvasToBlob(output, 'image/png', 1);
   }
 
-  async function saveCaptureLocally(rawCanvas, printBlob) {
-    const rawBlob = await canvasToBlob(rawCanvas);
-    const db = await openDatabase();
-    const transaction = db.transaction(STORE_NAME, 'readwrite');
-    transaction.objectStore(STORE_NAME).add({
-      createdAt: new Date().toISOString(),
-      raw: rawBlob,
-      print: printBlob
-    });
-    return new Promise((resolve, reject) => {
-      transaction.oncomplete = () => resolve();
-      transaction.onerror = () => reject(transaction.error);
-    });
-  }
-
-  async function clearLocalStorageHistory() {
-    const db = await openDatabase();
-    const transaction = db.transaction(STORE_NAME, 'readwrite');
-    transaction.objectStore(STORE_NAME).clear();
-    return new Promise((resolve, reject) => {
-      transaction.oncomplete = () => resolve();
-      transaction.onerror = () => reject(transaction.error);
-    });
-  }
-
-  function showResultScreen(blob) {
+  function revokeOldUrls() {
     if (finalUrl) URL.revokeObjectURL(finalUrl);
-    finalBlob = blob;
-    finalUrl = URL.createObjectURL(blob);
-    els.resultPreview.src = finalUrl;
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    finalUrl = '';
+    previewUrl = '';
+  }
+
+  function filename() {
+    const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+    return `photobooth-gabrielle-corentin-${stamp}.png`;
+  }
+
+  function downloadBlob(blob) {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename();
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
+
+  async function showResultScreen(rawCanvas, printBlob) {
+    revokeOldUrls();
+    finalBlob = printBlob;
+    const previewBlob = await canvasToBlob(rawCanvas, 'image/jpeg', 0.94);
+    finalUrl = URL.createObjectURL(printBlob);
+    previewUrl = URL.createObjectURL(previewBlob);
+    els.resultPreview.src = previewUrl;
     els.printImage.src = finalUrl;
-    els.resultStatus.textContent = 'Photo enregistrée sur cet iPad. Retour automatique après 30 secondes.';
+    els.resultStatus.textContent = 'Photo téléchargée sur l’iPad. Retour automatique après 30 secondes.';
     setScreen('result');
     startResultIdleTimer();
+    setTimeout(() => downloadBlob(printBlob), 250);
   }
 
   function startResultIdleTimer() {
@@ -350,10 +318,9 @@
     try {
       await ensureCamera();
       await runCountdown();
-      rawPhotoCanvas = captureFrame();
-      const printBlob = await createFinalPrint(rawPhotoCanvas);
-      await saveCaptureLocally(rawPhotoCanvas, printBlob);
-      showResultScreen(printBlob);
+      const rawCanvas = captureFrame();
+      const printBlob = await createFinalPrint(rawCanvas);
+      await showResultScreen(rawCanvas, printBlob);
     } catch (error) {
       console.error(error);
       setScreen('home');
@@ -371,22 +338,10 @@
     window.print();
   }
 
-  async function sharePhoto() {
+  function recoverPhoto() {
     if (!finalBlob) return;
     startResultIdleTimer();
-    const file = new File([finalBlob], 'photobooth-gabrielle-corentin.png', { type: 'image/png' });
-
-    try {
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: 'Photobooth Gabrielle & Corentin' });
-      } else if (navigator.share) {
-        await navigator.share({ title: 'Photobooth Gabrielle & Corentin', url: finalUrl });
-      } else {
-        window.open(finalUrl, '_blank');
-      }
-    } catch (error) {
-      if (error.name !== 'AbortError') window.open(finalUrl, '_blank');
-    }
+    downloadBlob(finalBlob);
   }
 
   function openPinPanel() {
@@ -442,9 +397,10 @@
       saveSettings();
       closeModal(els.settingsPanel);
     });
-    els.clearStorageButton.addEventListener('click', async () => {
-      await clearLocalStorageHistory();
-      els.storageInfo.value = 'Historique effacé';
+    els.clearStorageButton.addEventListener('click', () => {
+      localStorage.removeItem('gc-photobooth-settings');
+      loadSettings();
+      els.storageInfo.value = 'Réglages réinitialisés';
     });
     els.cameraSelect.addEventListener('change', () => {
       selectedDeviceId = els.cameraSelect.value;
@@ -452,14 +408,9 @@
     });
     els.mirrorSelect.addEventListener('change', saveSettings);
     els.printButton.addEventListener('click', printPhoto);
-    els.shareButton.addEventListener('click', sharePhoto);
+    els.recoverButton.addEventListener('click', recoverPhoto);
     els.continueButton.addEventListener('click', resetToHome);
     els.resultScreen.addEventListener('pointerdown', startResultIdleTimer);
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible' && els.resultScreen.classList.contains('is-active')) {
-        startResultIdleTimer();
-      }
-    });
   }
 
   async function init() {
@@ -467,13 +418,11 @@
     bindEvents();
     preventZoom();
     await listCameras().catch(() => {});
-
     if (localStorage.getItem('gc-camera-was-accepted') === '1') {
       startCamera('').catch(() => setStatus('Touchez Prendre une photo'));
     }
-
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js?v=gc-2026-03').catch(() => {});
+      navigator.serviceWorker.register('./sw.js?v=gc-2026-04').catch(() => {});
     }
   }
 
