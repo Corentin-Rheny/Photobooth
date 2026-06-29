@@ -1,4 +1,4 @@
-const CACHE = 'gc-photobooth-2026-03';
+const CACHE = 'gc-photobooth-2026-04';
 const FILES = [
   './',
   './index.html',
