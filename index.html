@@ -7,65 +7,62 @@
   <meta name="apple-mobile-web-app-title" content="Photobooth GC">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#FEF2EB">
-  <link rel="manifest" href="./manifest.webmanifest?v=gc-2026-03">
-  <link rel="icon" href="./icon.svg?v=gc-2026-03" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="./icon.svg?v=gc-2026-03">
-  <link rel="stylesheet" href="./styles.css?v=gc-2026-03">
+  <link rel="manifest" href="./manifest.webmanifest?v=gc-2026-04">
+  <link rel="icon" href="./icon.svg?v=gc-2026-04" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon.svg?v=gc-2026-04">
+  <link rel="stylesheet" href="./styles.css?v=gc-2026-04">
   <title>Photobooth Gabrielle & Corentin</title>
 </head>
 <body>
   <main class="app-shell" id="appShell">
     <section class="screen screen-home is-active" id="homeScreen" aria-label="Accueil photobooth">
-      <header class="topline">
-        <img class="brand-mark" src="./icon.svg?v=gc-2026-03" alt="Logo Gabrielle et Corentin">
+      <header class="app-header">
+        <div class="header-spacer" aria-hidden="true"></div>
+        <h1 class="couple-title">Gabrielle & Corentin</h1>
         <button class="settings-link" id="settingsButton" type="button">Réglages</button>
       </header>
 
-      <div class="hero-grid">
-        <section class="intro-copy">
-          <p class="eyebrow">Gabrielle & Corentin</p>
-          <h1>Photobooth</h1>
-          <p class="date-line">22 août 2026</p>
-        </section>
+      <section class="live-frame home-frame" aria-label="Vue directe de la caméra">
+        <video id="liveVideo" autoplay muted playsinline></video>
+        <div class="camera-placeholder" id="cameraPlaceholder">Vue caméra</div>
+      </section>
 
-        <section class="camera-card" aria-label="Vue directe de la caméra">
-          <video id="liveVideo" autoplay muted playsinline></video>
-          <div class="camera-placeholder" id="cameraPlaceholder">
-            <span>Vue caméra</span>
-          </div>
-        </section>
-      </div>
-
-      <footer class="home-actions">
-        <button class="primary-action" id="takePhotoButton" type="button">Prendre une photo</button>
+      <footer class="home-footer">
+        <button class="main-photo-button" id="takePhotoButton" type="button">
+          <span>Prendre</span>
+          <span>une photo</span>
+        </button>
         <p class="micro-status" id="statusText">Prêt</p>
       </footer>
     </section>
 
     <section class="screen screen-countdown" id="countdownScreen" aria-label="Compte à rebours">
-      <div class="count-camera">
+      <section class="live-frame countdown-frame">
         <video id="countVideo" autoplay muted playsinline></video>
-      </div>
-      <div class="count-number" id="countNumber">5</div>
-      <p class="count-caption">Ne bougez plus...</p>
+        <div class="count-number" id="countNumber">5</div>
+      </section>
     </section>
 
     <section class="screen screen-result" id="resultScreen" aria-label="Photo prise">
-      <header class="result-head">
-        <img class="brand-mark small" src="./icon.svg?v=gc-2026-03" alt="Logo Gabrielle et Corentin">
-        <p>Votre photo est prête</p>
+      <header class="app-header result-header">
+        <div class="header-spacer" aria-hidden="true"></div>
+        <h1 class="couple-title">Gabrielle & Corentin</h1>
+        <div class="header-spacer" aria-hidden="true"></div>
       </header>
 
-      <section class="result-preview-wrap">
-        <img id="resultPreview" class="result-preview" alt="Photo finale prête à imprimer et partager">
+      <section class="result-frame" aria-label="Photo prise">
+        <img id="resultPreview" class="result-preview" alt="Photo prise">
       </section>
 
       <footer class="result-actions">
-        <button class="secondary-action" id="printButton" type="button">AirPrint</button>
-        <button class="secondary-action" id="shareButton" type="button">Partager</button>
-        <button class="primary-action compact" id="continueButton" type="button">Continuer</button>
+        <button class="pill-button" id="printButton" type="button">
+          <span>Imprimer</span>
+          <span>avec Airprint</span>
+        </button>
+        <button class="pill-button" id="recoverButton" type="button">Réccupérer</button>
+        <button class="pill-button" id="continueButton" type="button">Continuer</button>
       </footer>
-      <p class="micro-status result-note" id="resultStatus">Retour automatique à l'accueil après 30 secondes.</p>
+      <p class="result-note" id="resultStatus">Retour automatique à l'accueil après 30 secondes.</p>
     </section>
 
     <section class="modal-screen" id="pinPanel" aria-label="Code réglages" aria-hidden="true">
@@ -74,7 +71,7 @@
         <h2>Réglages</h2>
         <p>Entrez le code administrateur.</p>
         <input id="pinInput" class="pin-input" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="••••••••">
-        <button class="primary-action compact" id="validatePinButton" type="button">Valider</button>
+        <button class="admin-button" id="validatePinButton" type="button">Valider</button>
         <p class="error-text" id="pinError"></p>
       </div>
     </section>
@@ -101,23 +98,23 @@
               <option value="output">Oui, écran et photo</option>
             </select>
           </label>
-          <label>Nom de l'événement
+          <label>Nom imprimé
             <input id="eventTitleInput" value="Gabrielle & Corentin">
           </label>
           <label>Date imprimée
-            <input id="eventDateInput" value="22 août 2026">
+            <input id="eventDateInput" value="22.08.2026">
           </label>
-          <label>Stockage local
-            <input id="storageInfo" value="Historique iPad activé" disabled>
+          <label>Stockage
+            <input id="storageInfo" value="Téléchargement automatique" disabled>
           </label>
         </div>
         <div class="settings-actions">
-          <button class="secondary-action" id="refreshCamerasButton" type="button">Rechercher caméra</button>
-          <button class="secondary-action" id="restartCameraButton" type="button">Redémarrer caméra</button>
-          <button class="secondary-action danger" id="clearStorageButton" type="button">Effacer historique</button>
-          <button class="primary-action compact" id="saveSettingsButton" type="button">OK</button>
+          <button class="admin-secondary" id="refreshCamerasButton" type="button">Rechercher caméra</button>
+          <button class="admin-secondary" id="restartCameraButton" type="button">Redémarrer caméra</button>
+          <button class="admin-secondary danger" id="clearStorageButton" type="button">Effacer historique</button>
+          <button class="admin-button" id="saveSettingsButton" type="button">OK</button>
         </div>
-        <p class="micro-status">La caméra externe apparaît souvent sous le nom USB Camera, Capture, HDMI ou UVC.</p>
+        <p class="settings-help">La caméra externe apparaît souvent sous le nom USB Camera, Capture, HDMI ou UVC.</p>
       </div>
     </section>
   </main>
@@ -126,6 +123,6 @@
     <img id="printImage" alt="Photo finale">
   </div>
 
-  <script src="./app.js?v=gc-2026-03"></script>
+  <script src="./app.js?v=gc-2026-04"></script>
 </body>
 </html>
