@@ -7,10 +7,10 @@
   <meta name="apple-mobile-web-app-title" content="Photobooth GC">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#FEF2EB">
-  <link rel="manifest" href="./manifest.webmanifest?v=gc-2026-04">
-  <link rel="icon" href="./icon.svg?v=gc-2026-04" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="./icon.svg?v=gc-2026-04">
-  <link rel="stylesheet" href="./styles.css?v=gc-2026-04">
+  <link rel="manifest" href="./manifest.webmanifest?v=gc-2026-05">
+  <link rel="icon" href="./icon.svg?v=gc-2026-05" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon.svg?v=gc-2026-05">
+  <link rel="stylesheet" href="./styles.css?v=gc-2026-05">
   <title>Photobooth Gabrielle & Corentin</title>
 </head>
 <body>
@@ -62,7 +62,19 @@
         <button class="pill-button" id="recoverButton" type="button">Réccupérer</button>
         <button class="pill-button" id="continueButton" type="button">Continuer</button>
       </footer>
-      <p class="result-note" id="resultStatus">Retour automatique à l'accueil après 30 secondes.</p>
+      <p class="result-note" id="resultStatus">La photo est envoyée vers le NAS.</p>
+    </section>
+
+    <section class="modal-screen" id="qrPanel" aria-label="QR code de récupération" aria-hidden="true">
+      <div class="modal-card qr-card">
+        <button class="close-button" id="closeQrButton" type="button">×</button>
+        <h2>Récupérer la photo</h2>
+        <p id="qrStatus">Scannez ce QR code pour ouvrir la photo sur votre téléphone.</p>
+        <div class="qr-box">
+          <img id="qrImage" alt="QR code de récupération">
+        </div>
+        <a class="qr-link" id="qrLink" href="#" target="_blank" rel="noreferrer">Ouvrir le lien</a>
+      </div>
     </section>
 
     <section class="modal-screen" id="pinPanel" aria-label="Code réglages" aria-hidden="true">
@@ -91,6 +103,13 @@
               <option value="3840x2160">4K - test uniquement</option>
             </select>
           </label>
+          <label>Compteur
+            <select id="countdownSelect">
+              <option value="3">3 secondes</option>
+              <option value="5" selected>5 secondes</option>
+              <option value="10">10 secondes</option>
+            </select>
+          </label>
           <label>Miroir écran
             <select id="mirrorSelect">
               <option value="preview" selected>Oui, écran seulement</option>
@@ -104,17 +123,26 @@
           <label>Date imprimée
             <input id="eventDateInput" value="22.08.2026">
           </label>
-          <label>Stockage
-            <input id="storageInfo" value="Téléchargement automatique" disabled>
+          <label>URL WebDAV NAS
+            <input id="nasUploadUrlInput" placeholder="https://nas.../webdav/Photobooth">
+          </label>
+          <label>Lien public Drive
+            <input id="nasPublicUrlInput" placeholder="https://drive.../photo/">
+          </label>
+          <label>Utilisateur NAS
+            <input id="nasUserInput" autocomplete="username" placeholder="optionnel">
+          </label>
+          <label>Mot de passe NAS
+            <input id="nasPasswordInput" type="password" autocomplete="current-password" placeholder="optionnel">
           </label>
         </div>
         <div class="settings-actions">
           <button class="admin-secondary" id="refreshCamerasButton" type="button">Rechercher caméra</button>
           <button class="admin-secondary" id="restartCameraButton" type="button">Redémarrer caméra</button>
-          <button class="admin-secondary danger" id="clearStorageButton" type="button">Effacer historique</button>
+          <button class="admin-secondary danger" id="clearStorageButton" type="button">Effacer config NAS</button>
           <button class="admin-button" id="saveSettingsButton" type="button">OK</button>
         </div>
-        <p class="settings-help">La caméra externe apparaît souvent sous le nom USB Camera, Capture, HDMI ou UVC.</p>
+        <p class="settings-help">Pour l'envoi automatique, le NAS doit accepter un envoi WebDAV/HTTPS depuis Safari. Le lien public sert au QR code.</p>
       </div>
     </section>
   </main>
@@ -123,6 +151,6 @@
     <img id="printImage" alt="Photo finale">
   </div>
 
-  <script src="./app.js?v=gc-2026-04"></script>
+  <script src="./app.js?v=gc-2026-05"></script>
 </body>
 </html>
