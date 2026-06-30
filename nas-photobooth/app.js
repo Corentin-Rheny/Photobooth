@@ -11,7 +11,7 @@
     homeScreen: $('homeScreen'), countdownScreen: $('countdownScreen'), resultScreen: $('resultScreen'),
     liveVideo: $('liveVideo'), countVideo: $('countVideo'), cameraPlaceholder: $('cameraPlaceholder'),
     settingsButton: $('settingsButton'), takePhotoButton: $('takePhotoButton'), statusText: $('statusText'), countNumber: $('countNumber'),
-    resultPreview: $('resultPreview'), printImage: $('printImage'), printButton: $('printButton'), recoverButton: $('recoverButton'), continueButton: $('continueButton'), resultStatus: $('resultStatus'),
+    resultPreview: $('resultPreview'), printImage: $('printImage'), printButton: $('printButton'), continueButton: $('continueButton'), resultStatus: $('resultStatus'),
     qrImage: $('qrImage'), qrHelp: $('qrHelp'), photoLink: $('photoLink'),
     pinPanel: $('pinPanel'), pinInput: $('pinInput'), pinError: $('pinError'), validatePinButton: $('validatePinButton'), closePinButton: $('closePinButton'),
     settingsPanel: $('settingsPanel'), closeSettingsButton: $('closeSettingsButton'), cameraSelect: $('cameraSelect'), resolutionSelect: $('resolutionSelect'), countdownSelect: $('countdownSelect'), mirrorSelect: $('mirrorSelect'), printModeSelect: $('printModeSelect'), idleSelect: $('idleSelect'),
@@ -250,7 +250,6 @@
   }
 
   function printPhoto() { if (!finalBlob) return; resetIdleTimer(); window.print(); }
-  function recoverPhoto() { resetIdleTimer(); if (publicPhotoUrl) window.open(publicPhotoUrl, '_blank'); }
   function resetIdleTimer() { clearTimeout(idleTimer); idleTimer = setTimeout(resetToHome, Number(els.idleSelect.value || 30) * 1000); }
   function resetToHome() { clearTimeout(idleTimer); setScreen('home'); status('Prêt'); }
 
@@ -278,7 +277,6 @@
     els.cameraSelect.addEventListener('change', () => { selectedDeviceId = els.cameraSelect.value; if (stream) restartCamera().catch((error) => alert(error.message)); });
     [els.countdownSelect, els.mirrorSelect, els.printModeSelect, els.idleSelect].forEach((el) => el.addEventListener('change', saveSettings));
     els.printButton.addEventListener('click', printPhoto);
-    els.recoverButton.addEventListener('click', recoverPhoto);
     els.continueButton.addEventListener('click', resetToHome);
     els.resultScreen.addEventListener('pointerdown', resetIdleTimer);
   }
