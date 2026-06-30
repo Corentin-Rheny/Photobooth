@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Debug Photobooth</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background:#FEF2EB;color:#241716;padding:20px;margin:0}
+button{display:block;width:100%;margin:12px 0;padding:16px;border-radius:14px;border:0;background:#E04043;color:#FEF2EB;font-size:18px}
+pre{white-space:pre-wrap;background:#fff;border:1px solid #e8c4bd;border-radius:14px;padding:14px;font-size:13px;line-height:1.4}
+video{width:100%;max-height:42vh;background:#000;border-radius:18px;object-fit:cover}
+</style>
+</head>
+<body>
+<h1>Debug Photobooth</h1>
+<video id="video" autoplay muted playsinline></video>
+<button id="testPost">1. Tester POST simple</button>
+<button id="testBlob">2. Tester canvas + Blob</button>
+<button id="testUpload">3. Tester upload image test</button>
+<button id="testCameraUpload">4. Tester capture camera + upload</button>
+<pre id="log">Pret.</pre>
+<script>
+const logEl=document.getElementById('log');
+const video=document.getElementById('video');
+function log(msg,obj){logEl.textContent+='\n\n'+msg+(obj?'\n'+JSON.stringify(obj,null,2):'');}
+async function readJson(res){const txt=await res.text();try{return JSON.parse(txt)}catch(e){return {raw:txt,status:res.status}}}
+async function blobFromCanvas(canvas,type,quality){return new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('toBlob returned null')),type,quality));}
+async function startCamera(){if(video.srcObject)return;const s=await navigator.mediaDevices.getUserMedia({audio:false,video:true});video.srcObject=s;await video.play();log('Camera OK',{w:video.videoWidth,h:video.videoHeight,readyState:video.readyState});}
+document.getElementById('testPost').onclick=async()=>{try{log('POST simple start');const res=await fetch('api/posttest.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hello:'ipad',t:Date.now()})});log('POST simple response',await readJson(res));}catch(e){log('POST simple ERROR',{name:e.name,message:e.message});}};
+document.getElementById('testBlob').onclick=async()=>{try{log('Blob test start');const c=document.createElement('canvas');c.width=1200;c.height=800;const x=c.getContext('2d');x.fillStyle='#FEF2EB';x.fillRect(0,0,c.width,c.height);x.fillStyle='#E04043';x.font='80px serif';x.fillText('Test',100,200);const b=await blobFromCanvas(c,'image/png',1);log('Blob OK',{size:b.size,type:b.type});}catch(e){log('Blob ERROR',{name:e.name,message:e.message});}};
+document.getElementById('testUpload').onclick=async()=>{try{log('Upload image test start');const c=document.createElement('canvas');c.width=800;c.height=500;const x=c.getContext('2d');x.fillStyle='#E04043';x.fillRect(0,0,c.width,c.height);const b=await blobFromCanvas(c,'image/png',1);const fd=new FormData();fd.append('photo',b,'debug.png');const res=await fetch('api/upload.php',{method:'POST',body:fd});log('Upload image response',await readJson(res));}catch(e){log('Upload image ERROR',{name:e.name,message:e.message});}};
+document.getElementById('testCameraUpload').onclick=async()=>{try{log('Camera upload start');await startCamera();await new Promise(r=>setTimeout(r,500));const c=document.createElement('canvas');c.width=video.videoWidth||1280;c.height=video.videoHeight||720;const x=c.getContext('2d');x.drawImage(video,0,0,c.width,c.height);log('Canvas camera OK',{w:c.width,h:c.height});const b=await blobFromCanvas(c,'image/jpeg',0.82);log('Camera blob OK',{size:b.size,type:b.type});const fd=new FormData();fd.append('photo',b,'camera-debug.jpg');const res=await fetch('api/upload.php',{method:'POST',body:fd});log('Camera upload response',await readJson(res));}catch(e){log('Camera upload ERROR',{name:e.name,message:e.message});}};
+</script>
+</body>
+</html>
