@@ -13,9 +13,17 @@ if (!isset($_FILES['photo']) || $_FILES['photo']['error'] !== UPLOAD_ERR_OK) {
     exit;
 }
 
+$mime = $_FILES['photo']['type'] ?? '';
+$ext = 'jpg';
+if ($mime === 'image/png') {
+    $ext = 'png';
+} elseif ($mime === 'image/jpeg' || $mime === 'image/jpg') {
+    $ext = 'jpg';
+}
+
 $stamp = date('Ymd-His');
 $rand = substr(bin2hex(random_bytes(4)), 0, 6);
-$filename = 'GC-' . $stamp . '-' . $rand . '.png';
+$filename = 'GC-' . $stamp . '-' . $rand . '.' . $ext;
 $target = $photoDir . '/' . $filename;
 
 if (!move_uploaded_file($_FILES['photo']['tmp_name'], $target)) {
@@ -26,4 +34,4 @@ if (!move_uploaded_file($_FILES['photo']['tmp_name'], $target)) {
 
 @chmod($target, 0644);
 $url = PUBLIC_BASE_URL . '/photo.php?f=' . rawurlencode($filename);
-echo json_encode(['ok' => true, 'filename' => $filename, 'url' => $url]);
+echo json_encode(['ok' => true, 'filename' => $filename, 'url' => $url, 'size' => filesize($target), 'mime' => $mime]);
