@@ -110,8 +110,7 @@
     try { stream = await navigator.mediaDevices.getUserMedia({ audio: false, video }); }
     catch (_) { stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: deviceId ? { deviceId: { exact: deviceId } } : true }); }
     attachStream();
-    await els.liveVideo.play();
-    await els.countVideo.play();
+    await Promise.allSettled([els.liveVideo.play(), els.countVideo.play()]);
     selectedDeviceId = stream.getVideoTracks()[0]?.getSettings?.().deviceId || deviceId || '';
     localStorage.setItem('gc-camera-ok', '1');
     els.cameraPlaceholder.classList.add('is-hidden');
@@ -127,6 +126,7 @@
 
   async function runCountdown() {
     setScreen('countdown');
+    await Promise.allSettled([els.countVideo.play(), els.liveVideo.play()]);
     const seconds = Number(els.countdownSelect.value || 5);
     for (let i = seconds; i >= 1; i -= 1) {
       els.countNumber.textContent = String(i);
@@ -134,8 +134,21 @@
     }
   }
 
-  function captureFrame() {
-    const video = els.liveVideo;
+  async function waitForVideoFrame(video) {
+    if (video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) return;
+    await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('La caméra n’est pas encore prête.')), 2500);
+      const done = () => { clearTimeout(timeout); resolve(); };
+      video.addEventListener('loadeddata', done, { once: true });
+      video.addEventListener('playing', done, { once: true });
+    });
+  }
+
+  async function captureFrame() {
+    const candidates = [els.countVideo, els.liveVideo];
+    let video = candidates.find((v) => v.readyState >= 2 && v.videoWidth > 0 && v.videoHeight > 0) || els.countVideo;
+    await video.play().catch(() => {});
+    await waitForVideoFrame(video);
     const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth || 1920;
     canvas.height = video.videoHeight || 1080;
@@ -153,7 +166,7 @@
   }
 
   function canvasToBlob(canvas, type = 'image/png', quality = 1) {
-    return new Promise((resolve) => canvas.toBlob(resolve, type, quality));
+    return new Promise((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('Impossible de générer la photo.')), type, quality));
   }
 
   async function createFinalPrint(rawCanvas) {
@@ -235,13 +248,13 @@
     try {
       await ensureCamera();
       await runCountdown();
-      const raw = captureFrame();
+      const raw = await captureFrame();
       const printBlob = await createFinalPrint(raw);
       await showResult(raw, printBlob);
     } catch (error) {
       console.error(error);
       setScreen('home');
-      status('Erreur');
+      status('Erreur caméra');
       alert(error.message || String(error));
     } finally {
       busy = false;
