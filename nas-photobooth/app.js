@@ -170,9 +170,7 @@
 
   async function createFinalPrint(rawCanvas) {
     if (document.fonts) {
-      try {
-        await Promise.race([document.fonts.ready, sleep(700)]);
-      } catch (_) {}
+      try { await Promise.race([document.fonts.ready, sleep(700)]); } catch (_) {}
     }
     const out = document.createElement('canvas');
     out.width = 1748;
@@ -214,7 +212,7 @@
   function setQr(url) {
     publicPhotoUrl = url;
     els.qrImage.src = `${QR_BASE}?size=320x320&margin=12&data=${encodeURIComponent(url)}`;
-    els.photoLink.href = url;
+    if (els.photoLink) els.photoLink.href = url;
     els.qrHelp.textContent = 'Scannez ce QR code pour récupérer votre photo.';
   }
 
@@ -228,7 +226,7 @@
     els.resultPreview.src = previewUrl;
     els.printImage.src = finalUrl;
     els.qrImage.removeAttribute('src');
-    els.photoLink.removeAttribute('href');
+    if (els.photoLink) els.photoLink.removeAttribute('href');
     els.qrHelp.textContent = 'Envoi de votre photo...';
     els.resultStatus.textContent = 'Upload vers le NAS en cours...';
     setScreen('result');
@@ -237,7 +235,7 @@
       const uploaded = await uploadPhoto(printBlob);
       setQr(uploaded.url);
       els.resultStatus.textContent = 'Photo disponible.';
-      if (els.printModeSelect.value === 'auto') setTimeout(() => window.print(), 500);
+      if (els.printModeSelect.value === 'auto') setTimeout(printPhoto, 500);
     } catch (error) {
       els.qrHelp.textContent = 'La photo est prête, mais l’envoi NAS a échoué.';
       els.resultStatus.textContent = error.message;
@@ -265,7 +263,20 @@
     }
   }
 
-  function printPhoto() { if (!finalBlob) return; resetIdleTimer(); window.print(); }
+  function printPhoto() {
+    if (!finalBlob || !finalUrl) return;
+    clearTimeout(idleTimer);
+    els.resultStatus.textContent = 'Ouverture de l’impression...';
+    setTimeout(resetToHome, 1800);
+    setTimeout(resetToHome, 8000);
+    try {
+      window.print();
+    } catch (error) {
+      els.resultStatus.textContent = 'Impression indisponible sur cet appareil.';
+      setTimeout(resetToHome, 1200);
+    }
+  }
+
   function resetIdleTimer() { clearTimeout(idleTimer); idleTimer = setTimeout(resetToHome, Number(els.idleSelect.value || 30) * 1000); }
   function resetToHome() { clearTimeout(idleTimer); setScreen('home'); status('Prêt'); }
 
