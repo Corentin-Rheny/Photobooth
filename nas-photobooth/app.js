@@ -90,7 +90,7 @@
 
   function attachStream() {
     els.liveVideo.srcObject = stream;
-    els.countVideo.srcObject = stream;
+    if (els.countVideo) els.countVideo.srcObject = null;
   }
 
   function stopCamera() {
@@ -110,7 +110,7 @@
     try { stream = await navigator.mediaDevices.getUserMedia({ audio: false, video }); }
     catch (_) { stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: deviceId ? { deviceId: { exact: deviceId } } : true }); }
     attachStream();
-    await Promise.allSettled([els.liveVideo.play(), els.countVideo.play()]);
+    await els.liveVideo.play();
     selectedDeviceId = stream.getVideoTracks()[0]?.getSettings?.().deviceId || deviceId || '';
     localStorage.setItem('gc-camera-ok', '1');
     els.cameraPlaceholder.classList.add('is-hidden');
@@ -126,7 +126,7 @@
 
   async function runCountdown() {
     setScreen('countdown');
-    await Promise.allSettled([els.countVideo.play(), els.liveVideo.play()]);
+    await els.liveVideo.play().catch(() => {});
     const seconds = Number(els.countdownSelect.value || 5);
     for (let i = seconds; i >= 1; i -= 1) {
       els.countNumber.textContent = String(i);
@@ -145,8 +145,7 @@
   }
 
   async function captureFrame() {
-    const candidates = [els.countVideo, els.liveVideo];
-    let video = candidates.find((v) => v.readyState >= 2 && v.videoWidth > 0 && v.videoHeight > 0) || els.countVideo;
+    const video = els.liveVideo;
     await video.play().catch(() => {});
     await waitForVideoFrame(video);
     const canvas = document.createElement('canvas');
@@ -165,12 +164,16 @@
     ctx.drawImage(source, (source.width - cropWidth) / 2, (source.height - cropHeight) / 2, cropWidth, cropHeight, target.x, target.y, target.width, target.height);
   }
 
-  function canvasToBlob(canvas, type = 'image/png', quality = 1) {
+  function canvasToBlob(canvas, type = 'image/jpeg', quality = 0.92) {
     return new Promise((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('Impossible de générer la photo.')), type, quality));
   }
 
   async function createFinalPrint(rawCanvas) {
-    if (document.fonts) { await document.fonts.ready; await document.fonts.load('56px BravenGC'); }
+    if (document.fonts) {
+      try {
+        await Promise.race([document.fonts.ready, sleep(700)]);
+      } catch (_) {}
+    }
     const out = document.createElement('canvas');
     out.width = 1748;
     out.height = 1181;
@@ -189,7 +192,7 @@
     ctx.fillText(EVENT_TITLE, 96, photoHeight + footer / 2 + 4);
     ctx.textAlign = 'right';
     ctx.fillText(EVENT_DATE, out.width - 96, photoHeight + footer / 2 + 4);
-    return canvasToBlob(out, 'image/png', 1);
+    return canvasToBlob(out, 'image/jpeg', 0.92);
   }
 
   function cleanupUrls() {
@@ -201,7 +204,7 @@
 
   async function uploadPhoto(blob) {
     const form = new FormData();
-    form.append('photo', blob, 'photobooth.png');
+    form.append('photo', blob, 'photobooth.jpg');
     const response = await fetch('api/upload.php', { method: 'POST', body: form });
     const json = await response.json();
     if (!response.ok || !json.ok) throw new Error(json.error || 'Upload impossible');
@@ -219,7 +222,7 @@
     cleanupUrls();
     finalBlob = printBlob;
     publicPhotoUrl = '';
-    const previewBlob = await canvasToBlob(rawCanvas, 'image/jpeg', 0.94);
+    const previewBlob = await canvasToBlob(rawCanvas, 'image/jpeg', 0.86);
     previewUrl = URL.createObjectURL(previewBlob);
     finalUrl = URL.createObjectURL(printBlob);
     els.resultPreview.src = previewUrl;
