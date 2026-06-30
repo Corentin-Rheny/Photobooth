@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Photobooth GC">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#FEF2EB">
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/logo.svg">
+  <link rel="stylesheet" href="styles.css?v=nas-pro-01">
+  <title>Photobooth Gabrielle & Corentin</title>
+</head>
+<body>
+  <main class="booth" id="booth">
+    <section class="screen screen-home is-active" id="homeScreen">
+      <header class="topbar">
+        <div></div>
+        <h1>Gabrielle & Corentin</h1>
+        <button id="settingsButton" class="text-button" type="button">Réglages</button>
+      </header>
+
+      <section class="live-window">
+        <video id="liveVideo" autoplay muted playsinline></video>
+        <div id="cameraPlaceholder" class="placeholder">Vue caméra</div>
+      </section>
+
+      <footer class="home-cta">
+        <button id="takePhotoButton" class="big-button" type="button"><span>Prendre</span><span>une photo</span></button>
+        <p id="statusText" class="status">Prêt</p>
+      </footer>
+    </section>
+
+    <section class="screen screen-countdown" id="countdownScreen">
+      <section class="count-window">
+        <video id="countVideo" autoplay muted playsinline></video>
+        <div id="countNumber" class="count-number">5</div>
+      </section>
+    </section>
+
+    <section class="screen screen-result" id="resultScreen">
+      <header class="topbar result-topbar">
+        <div></div>
+        <h1>Gabrielle & Corentin</h1>
+        <div></div>
+      </header>
+
+      <section class="result-layout">
+        <div class="result-photo-wrap">
+          <img id="resultPreview" class="result-photo" alt="Photo prise">
+        </div>
+        <aside class="qr-panel" id="inlineQrPanel">
+          <h2>Votre photo</h2>
+          <p id="qrHelp">Votre photo est en cours d'envoi.</p>
+          <div class="qr-box"><img id="qrImage" alt="QR code"></div>
+          <a id="photoLink" href="#" target="_blank" rel="noreferrer">Ouvrir la photo</a>
+        </aside>
+      </section>
+
+      <footer class="result-actions">
+        <button id="printButton" class="pill-button" type="button"><span>Imprimer</span><span>avec AirPrint</span></button>
+        <button id="recoverButton" class="pill-button" type="button">Récupérer</button>
+        <button id="continueButton" class="pill-button" type="button">Continuer</button>
+      </footer>
+      <p id="resultStatus" class="result-status">Upload en cours...</p>
+    </section>
+
+    <section class="modal" id="pinPanel" aria-hidden="true">
+      <div class="card small-card">
+        <button id="closePinButton" class="close-button" type="button">×</button>
+        <h2>Réglages</h2>
+        <p>Entrez le code administrateur.</p>
+        <input id="pinInput" class="pin-input" inputmode="numeric" maxlength="8" placeholder="••••••••">
+        <button id="validatePinButton" class="admin-button" type="button">Valider</button>
+        <p id="pinError" class="error"></p>
+      </div>
+    </section>
+
+    <section class="modal" id="settingsPanel" aria-hidden="true">
+      <div class="card settings-card">
+        <button id="closeSettingsButton" class="close-button" type="button">×</button>
+        <h2>Configuration</h2>
+        <div class="settings-grid">
+          <label>Caméra<select id="cameraSelect"></select></label>
+          <label>Résolution<select id="resolutionSelect"><option value="1280x720">720p secours</option><option value="1920x1080" selected>1080p recommandé</option><option value="3840x2160">4K test</option></select></label>
+          <label>Compteur<select id="countdownSelect"><option value="3">3 secondes</option><option value="5" selected>5 secondes</option><option value="10">10 secondes</option></select></label>
+          <label>Miroir écran<select id="mirrorSelect"><option value="preview" selected>Oui, écran seulement</option><option value="none">Non</option><option value="output">Oui, écran et photo</option></select></label>
+          <label>Impression<select id="printModeSelect"><option value="manual" selected>Manuelle</option><option value="auto">AirPrint automatique après upload</option></select></label>
+          <label>Retour accueil<select id="idleSelect"><option value="15">15 secondes</option><option value="30" selected>30 secondes</option><option value="60">60 secondes</option></select></label>
+        </div>
+        <div class="settings-actions">
+          <button id="refreshCamerasButton" class="admin-secondary" type="button">Rechercher caméra</button>
+          <button id="restartCameraButton" class="admin-secondary" type="button">Redémarrer caméra</button>
+          <button id="saveSettingsButton" class="admin-button" type="button">OK</button>
+        </div>
+        <p class="hint">L'upload NAS est automatique via <strong>api/upload.php</strong>. Aucun identifiant n'est stocké dans l'interface.</p>
+      </div>
+    </section>
+  </main>
+
+  <div id="printArea" aria-hidden="true"><img id="printImage" alt="Photo finale"></div>
+  <script src="app.js?v=nas-pro-01"></script>
+</body>
+</html>
