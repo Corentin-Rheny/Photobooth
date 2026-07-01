@@ -88,16 +88,30 @@
     return { width, height };
   }
 
-  function attachStream() {
+  function showLiveVideo() {
+    if (!stream) return;
+    els.countVideo.srcObject = null;
     els.liveVideo.srcObject = stream;
-    if (els.countVideo) els.countVideo.srcObject = null;
+    els.liveVideo.play().catch(() => {});
+  }
+
+  function showCountdownVideo() {
+    if (!stream) return;
+    els.liveVideo.srcObject = null;
+    els.countVideo.srcObject = stream;
+    els.countVideo.play().catch(() => {});
+  }
+
+  function detachVideos() {
+    els.liveVideo.srcObject = null;
+    els.countVideo.srcObject = null;
   }
 
   function stopCamera() {
     if (!stream) return;
     stream.getTracks().forEach((track) => track.stop());
     stream = null;
-    attachStream();
+    detachVideos();
   }
 
   async function startCamera(deviceId = '') {
@@ -109,8 +123,7 @@
     if (deviceId) video.deviceId = { exact: deviceId }; else video.facingMode = { ideal: 'environment' };
     try { stream = await navigator.mediaDevices.getUserMedia({ audio: false, video }); }
     catch (_) { stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: deviceId ? { deviceId: { exact: deviceId } } : true }); }
-    attachStream();
-    await els.liveVideo.play();
+    showLiveVideo();
     selectedDeviceId = stream.getVideoTracks()[0]?.getSettings?.().deviceId || deviceId || '';
     localStorage.setItem('gc-camera-ok', '1');
     els.cameraPlaceholder.classList.add('is-hidden');
@@ -125,8 +138,8 @@
   }
 
   async function runCountdown() {
+    showCountdownVideo();
     setScreen('countdown');
-    await els.liveVideo.play().catch(() => {});
     const seconds = Number(els.countdownSelect.value || 5);
     for (let i = seconds; i >= 1; i -= 1) {
       els.countNumber.textContent = String(i);
@@ -145,7 +158,7 @@
   }
 
   async function captureFrame() {
-    const video = els.liveVideo;
+    const video = els.countVideo.srcObject ? els.countVideo : els.liveVideo;
     await video.play().catch(() => {});
     await waitForVideoFrame(video);
     const canvas = document.createElement('canvas');
@@ -229,6 +242,7 @@
     if (els.photoLink) els.photoLink.removeAttribute('href');
     els.qrHelp.textContent = 'Envoi de votre photo...';
     els.resultStatus.textContent = 'Upload vers le NAS en cours...';
+    detachVideos();
     setScreen('result');
     resetIdleTimer();
     try {
@@ -255,6 +269,7 @@
     } catch (error) {
       console.error(error);
       setScreen('home');
+      showLiveVideo();
       status('Erreur caméra');
       alert(error.message || String(error));
     } finally {
@@ -264,21 +279,24 @@
   }
 
   function printPhoto() {
-    if (!finalBlob || !finalUrl) return;
-    clearTimeout(idleTimer);
-    els.resultStatus.textContent = 'Ouverture de l’impression...';
-    setTimeout(resetToHome, 1800);
-    setTimeout(resetToHome, 8000);
-    try {
-      window.print();
-    } catch (error) {
-      els.resultStatus.textContent = 'Impression indisponible sur cet appareil.';
-      setTimeout(resetToHome, 1200);
+    if (!finalUrl) return;
+    const url = finalUrl;
+    resetToHome();
+    status('Impression ouverte');
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      status('Impression bloquée');
+      return;
     }
+
+    printWindow.document.open();
+    printWindow.document.write(`<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><title>Impression photobooth</title><style>html,body{margin:0;background:#fff;width:100%;height:100%;display:grid;place-items:center}img{width:148mm;height:100mm;object-fit:cover}button{position:fixed;left:20px;right:20px;bottom:20px;padding:14px;border:0;border-radius:999px;background:#E04043;color:#FEF2EB;font-size:18px}@media print{button{display:none}@page{size:148mm 100mm;margin:0}html,body{width:148mm;height:100mm}img{width:148mm;height:100mm}}</style></head><body><img src="${url}" alt="Photo"><button onclick="window.print()">Imprimer</button><script>window.addEventListener('load',function(){setTimeout(function(){window.print()},700)})<\/script></body></html>`);
+    printWindow.document.close();
   }
 
   function resetIdleTimer() { clearTimeout(idleTimer); idleTimer = setTimeout(resetToHome, Number(els.idleSelect.value || 30) * 1000); }
-  function resetToHome() { clearTimeout(idleTimer); setScreen('home'); status('Prêt'); }
+  function resetToHome() { clearTimeout(idleTimer); setScreen('home'); showLiveVideo(); status('Prêt'); }
 
   function openPin() { els.pinInput.value = ''; els.pinError.textContent = ''; openModal(els.pinPanel); setTimeout(() => els.pinInput.focus(), 80); }
   function validatePin() { if (els.pinInput.value === CONFIG_CODE) { closeModal(els.pinPanel); openModal(els.settingsPanel); listCameras().catch(() => {}); } else { els.pinError.textContent = 'Code incorrect.'; els.pinInput.select(); } }
